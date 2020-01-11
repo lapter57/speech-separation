@@ -9,7 +9,7 @@ def stft(data, frame_length=400, frame_step=160, pad_end=False):
     return np.stack((stft.real, stft.imag), -1)
 
 def istft(stft, frame_length=400, frame_step=160, with_pad=True):
-    stft = stft[...,0] + 1j * stft[...,1]
+    stft = stft[..., 0] + 1j * stft[..., 1]
     istft = tf.signal.inverse_stft(stft, frame_length, frame_step).numpy()
     if with_pad:
         padding = np.zeros((40,))

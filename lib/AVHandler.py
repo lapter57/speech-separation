@@ -52,15 +52,15 @@ def mix_audio(paths, filename, noise_path=None):
         audio, audio_sr = librosa.load(paths[i], sr=None)
         audio = audio / np.max(audio)
         if i == 0:
-            mix = audio*0.5
+            mix = audio
             sr = audio_sr
         else:
-            mix += audio*0.5
+            mix += audio
     if noise_path != None:
         noise_files = [f for f in os.listdir(noise_path) if os.path.isfile(os.path.join(noise_path, f))]
         noise_file = random.choice(noise_files)
         noise, noise_sr = librosa.load(os.path.join(noise_path, noise_file), sr=None)
         noise = noise / np.max(noise)
-        mix += 0.3*noise
+        mix += 0.3 * noise
     wavfile.write(filename, sr, mix)
         
