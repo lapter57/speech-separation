@@ -1,6 +1,7 @@
 from tensorflow.keras.layers import Input, Dense, Conv2D, Bidirectional, BatchNormalization, ReLU, Reshape, LSTM
 from tensorflow.keras.models import Model
 from tensorflow.keras import optimizers
+from tensorflow.keras.initializers import he_normal
 
 def conv2d(filters, kernel_size, dilation_rate, name, model):
     conv = Conv2D(filters, kernel_size=kernel_size, strides=(1, 1), 
@@ -8,7 +9,7 @@ def conv2d(filters, kernel_size, dilation_rate, name, model):
     conv = BatchNormalization()(conv)
     return ReLU()(conv)
 
-def AO_model(n_speakers):
+def build_ao_model(n_speakers):
     model_input = Input(shape=(298, 257, 2))
     conv1 = conv2d(96, (1, 7), (1, 1), 'conv1', model_input)
     conv2 = conv2d(96, (7, 1), (1, 1), 'conv2', conv1)

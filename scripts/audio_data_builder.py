@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../lib")
 import utils
-import AVHandler as avh
+import avhandler as avh
 import os
 import numpy as np
 import librosa
@@ -51,7 +51,7 @@ def build_crm_data(crm_path, mix_path, clean_path):
     for mix_npy in mix_npys:
         clean_filenames = utils.get_clean_in_mix(mix_npy[0])
         for clean_filename in clean_filenames:
-            clean_file = utils.find_path_contains(clean_filename, clean_files)[0]
+            clean_file = utils.find_paths_contains(clean_filename, clean_files)[0]
             clean_audio = np.load(clean_file)
             cRM = utils.cRM(clean_audio, mix_npy[1])
             filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
@@ -73,13 +73,13 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--path", action="store",
                         dest="path", required=True,
-                        help="Path to the folder where audio train data will be saved")
+                        help="Path to the folder where audio data will be saved")
     parser.add_argument("--speakers", action="store",
                         dest="speaker_path", required=True,
                         help="Path to the folder where the audio data of the speakers is stored")
     parser.add_argument("--usage", action="store", type=int,
                         dest="usage", default=2,
-                        help="Data usage to generate audio train data (default=2)")
+                        help="Data usage to generate audio data (default=2)")
     parser.add_argument("--nums", action="store", type=int,
                         dest="num_speakers", default=2,
                         help="Number of speakers used in the mix (default=2)")

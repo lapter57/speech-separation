@@ -60,10 +60,10 @@ def basename(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 def find_paths_contains(name, paths):
-    result = np.array()
+    result = np.empty(0)
     for path in paths:
         if name in path:
-            result.append(path)
+            result = np.append(result, path)
     return result
 
 def get_clean_in_mix(mix_filename):

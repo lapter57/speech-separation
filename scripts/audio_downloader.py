@@ -1,6 +1,6 @@
 import sys
 sys.path.append("../lib")
-import AVHandler as avh
+import avhandler as avh
 import os
 import pandas as pd
 from argparse import ArgumentParser
