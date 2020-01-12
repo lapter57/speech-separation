@@ -38,4 +38,3 @@ class AudioGenerator(keras.utils.Sequence):
             for j, cRM in enumerate(cRMs):
                 y[i, :, :, :, j] = np.load(cRM)
         return X, y
-    
