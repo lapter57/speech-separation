@@ -1,4 +1,6 @@
 from tensorflow.keras.layers import Input, Dense, Convolution2D, Bidirectional, BatchNormalization, ReLU, Reshape, LSTM
+from tensorflow.keras.models import Model
+from tensorflow.keras import optimizers
 
 def AO_model(n_speakers):
     model_input = Input(shape=(298, 257, 2))
@@ -63,7 +65,7 @@ def AO_model(n_speakers):
     conv15 = ReLU()(conv15)
 
     AVfusion = Reshape((298, 8 * 257))(conv15)
-
+    
     lstm = Bidirectional(LSTM(200, return_sequences=True))(AVfusion)
 
     fc1 = Dense(600, name="fc1", activation='relu', kernel_initializer=he_normal(seed=27))(lstm)
@@ -75,10 +77,7 @@ def AO_model(n_speakers):
     complex_mask = Dense(257 * 2 * n_speakers, name="complex_mask", kernel_initializer=he_normal(seed=65))(fc3)
 
     complex_mask_out = Reshape((298, 257, 2, n_speakers))(complex_mask)
-
+    
     AO_model = Model(inputs=model_input, outputs=complex_mask_out)
-
-    adam = optimizers.Adam()
-    AO_model.compile(optimizer=adam, loss='mse')
-
+    AO_model.compile(optimizer=optimizers.Adam(), loss='mse')
     return AO_model
