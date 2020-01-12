@@ -94,10 +94,10 @@ if __name__ == "__main__":
                         help="Path to the folder where the audio data of the speakers is stored")
     parser.add_argument("--usage", action="store", type=int,
                         dest="usage", default=2,
-                        help="Data usage to generate audio train data")
+                        help="Data usage to generate audio train data(default=2)")
     parser.add_argument("--nums", action="store", type=int,
                         dest="num_speakers", default=2,
-                        help="Number of speakers used in the mix")
+                        help="Number of speakers used in the mix(default=2)")
     parser.add_argument("--noise", action="store",
                         dest="noise_path",
                         help="Path to the folder where the audio data of the noise is stored. If specified, noise will be used during build")
