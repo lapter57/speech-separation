@@ -1,5 +1,8 @@
 import tensorflow as tf
 import numpy as np
+import os
+
+NOISE_PREFIX = "n:"
 
 def stft(data, frame_length=400, frame_step=160, pad_end=False):
     data = power_law(data)
@@ -47,3 +50,22 @@ def recover_uncompressed_mask(M, K=10, C=0.1):
     numerator = K - M
     denominator = K + M
     return (-1 / C) * np.log(numerator / denominator)
+
+
+def get_files(path):
+    return np.array([os.path.join(path, f) for f in os.listdir(path) 
+                     if os.path.isfile(os.path.join(path, f))])
+
+def basename(path):
+    return os.path.splitext(os.path.basename(path))[0]
+
+def find_paths_contains(name, paths):
+    result = np.array()
+    for path in paths:
+        if name in path:
+            result.append(path)
+    return result
+
+def get_clean_in_mix(mix_filename):
+    return np.array([s for s in mix_filename.split(".") 
+                     if ":" in s and not s.startswith(NOISE_PREFIX)])

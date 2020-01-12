@@ -9,20 +9,6 @@ import itertools
 from argparse import ArgumentParser
 
 DIR = ("{path}/{dirname}")
-NOISE_PREFIX = "n:"
-
-def get_files(path):
-    return np.array([os.path.join(path, f) for f in os.listdir(path) 
-                     if os.path.isfile(os.path.join(path, f))])
-
-def basename(path):
-    return os.path.splitext(os.path.basename(path))[0]
-
-def find_path_contains(name, paths):
-    for path in paths:
-        if name in path:
-            return path
-    return None
 
 def init_dir(path):
     if not os.path.isdir(path):
@@ -42,7 +28,7 @@ def build_clean_data(clean_path, speaker_paths):
     for path in speaker_paths:
         audio, sr = librosa.load(path, sr=16000)
         audio = utils.stft(audio)
-        filename = basename(path)
+        filename = utils.basename(path)
         np.save(("{}/{}.npy").format(clean_path, filename), audio)
 
 def build_mix_data(mix_path, speaker_paths, num_speakers=2, noise_path=None):
@@ -53,20 +39,19 @@ def build_mix_data(mix_path, speaker_paths, num_speakers=2, noise_path=None):
         mix = utils.stft(mix)
         filename = ""
         for path in paths:
-            filename += basename(path) + "."
+            filename += utils.basename(path) + "."
         if noise_path:
-            filename += NOISE_PREFIX + basename(noise_file) + "."
+            filename += utils.NOISE_PREFIX + utils.basename(noise_file) + "."
         np.save(("{}/{}npy").format(mix_path, filename), mix)
 
 def build_crm_data(crm_path, mix_path, clean_path):
-    mix_files = get_files(mix_path)
-    clean_files = get_files(clean_path)
-    mix_npys = np.array([(basename(f), np.load(f)) for f in mix_files])
+    mix_files = utils.get_files(mix_path)
+    clean_files = utils.get_files(clean_path)
+    mix_npys = np.array([(utils.basename(f), np.load(f)) for f in mix_files])
     for mix_npy in mix_npys:
-        clean_filenames = np.array([s for s in mix_npy[0].split(".") 
-                                    if ":" in s and not s.startswith(NOISE_PREFIX)])
+        clean_filenames = utils.get_clean_in_mix(mix_npy[0])
         for clean_filename in clean_filenames:
-            clean_file = find_path_contains(clean_filename, clean_files)
+            clean_file = utils.find_path_contains(clean_filename, clean_files)[0]
             clean_audio = np.load(clean_file)
             cRM = utils.cRM(clean_audio, mix_npy[1])
             filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
@@ -75,7 +60,7 @@ def build_crm_data(crm_path, mix_path, clean_path):
 def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None):
     mix_path, clean_path, crm_path = init_dirs(path)
     
-    speaker_paths = get_files(speaker_path)
+    speaker_paths = utils.get_files(speaker_path)
     np.random.shuffle(speaker_paths)
     speaker_paths = speaker_paths[:usage]
     
@@ -94,10 +79,10 @@ if __name__ == "__main__":
                         help="Path to the folder where the audio data of the speakers is stored")
     parser.add_argument("--usage", action="store", type=int,
                         dest="usage", default=2,
-                        help="Data usage to generate audio train data(default=2)")
+                        help="Data usage to generate audio train data (default=2)")
     parser.add_argument("--nums", action="store", type=int,
                         dest="num_speakers", default=2,
-                        help="Number of speakers used in the mix(default=2)")
+                        help="Number of speakers used in the mix (default=2)")
     parser.add_argument("--noise", action="store",
                         dest="noise_path",
                         help="Path to the folder where the audio data of the noise is stored. If specified, noise will be used during build")
