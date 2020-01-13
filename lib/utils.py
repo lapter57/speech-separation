@@ -3,6 +3,7 @@ import numpy as np
 import os
 
 NOISE_PREFIX = "n:"
+EPSILON = 1e-8
 
 def stft(data, frame_length=400, frame_step=160, pad_end=False):
     data = power_law(data)
@@ -10,7 +11,7 @@ def stft(data, frame_length=400, frame_step=160, pad_end=False):
     return np.stack((stft.real, stft.imag), -1)
 
 def istft(stft, frame_length=400, frame_step=160, with_pad=True):
-    stft = stft[..., 0] + 1j * stft[..., 1]
+    stft = stft[:,:,0] + 1j * stft[:,:,1]
     istft = tf.signal.inverse_stft(stft, frame_length, frame_step).numpy()
     if with_pad:
         padding = np.zeros((40,))
@@ -28,22 +29,26 @@ def power_law(data, power=0.3, inv=False):
 def icRM(mix, cRM, K=10, C=0.1):
     M = recover_uncompressed_mask(cRM)
     clean = np.zeros_like(M)
-    clean[..., 0] = M[..., 0] * mix[..., 0] - M[..., 1] * mix[..., 1]
-    clean[..., 1] = M[..., 0] * mix[..., 1] + M[..., 1] * mix[..., 0]
+    clean[:,:,0] = M[:,:,0] * mix[:,:,0] - M[:,:,1] * mix[:,:,1]
+    clean[:,:,1] = M[:,:,0] * mix[:,:,1] + M[:,:,1] * mix[:,:,0]
     return clean
     
 def build_cRM(clean, mix):
     M = np.zeros(mix.shape)
-    numerator_real = mix[..., 0] * clean[..., 0] + mix[..., 1] * clean[..., 1]
-    numerator_img = mix[..., 0] * clean[..., 1] - mix[..., 1] * clean[..., 0]
-    denominator = mix[..., 0] ** 2 + mix[..., 1] ** 2
-    M[..., 0] = numerator_real / denominator
-    M[..., 1] = numerator_img / denominator
+    numerator_real = mix[:,:,0] * clean[:,:,0] + mix[:,:,1] * clean[:,:,1]
+    numerator_img = mix[:,:,0] * clean[:,:,1] - mix[:,:,1] * clean[:,:,0]
+    denominator = mix[:,:,0] ** 2 + mix[:,:,1] ** 2 + EPSILON
+    M[:,:,0] = numerator_real / denominator
+    M[:,:,1] = numerator_img / denominator
     return M
 
 def compress_mask_with_tanh(M, K=10, C=0.1):
     numerator = 1 - np.exp(-C * M)
+    numerator[numerator == np.inf] = 1
+    numerator[numerator == -np.inf] = -1
     denominator = 1 + np.exp(-C * M)
+    denominator[denominator == np.inf] = 1
+    denominator[denominator == -np.inf] = -1
     return K * (numerator / denominator)
 
 def recover_uncompressed_mask(M, K=10, C=0.1):
