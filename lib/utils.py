@@ -17,7 +17,6 @@ def istft(stft, frame_length=400, frame_step=160, with_pad=True, with_power_law=
     if with_pad:
         padding = np.zeros((40,))
         istft = np.concatenate((padding, istft, padding), axis=0)
-    print(istft.shape)
     if with_power_law:
         return power_law(istft, inv=True)
     else:
