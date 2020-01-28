@@ -5,19 +5,23 @@ import os
 NOISE_PREFIX = "n:"
 EPSILON = 1e-8
 
-def stft(data, frame_length=400, frame_step=160, pad_end=False):
-    data = power_law(data)
+def stft(data, frame_length=400, frame_step=160, pad_end=False, with_power_law=False):
+    if with_power_law:
+        data = power_law(data)
     stft = tf.signal.stft(data, frame_length, frame_step, pad_end=pad_end).numpy()
     return np.stack((stft.real, stft.imag), -1)
 
-def istft(stft, frame_length=400, frame_step=160, with_pad=True):
+def istft(stft, frame_length=400, frame_step=160, with_pad=True, with_power_law=False):
     stft = stft[:,:,0] + 1j * stft[:,:,1]
     istft = tf.signal.inverse_stft(stft, frame_length, frame_step).numpy()
     if with_pad:
         padding = np.zeros((40,))
         istft = np.concatenate((padding, istft, padding), axis=0)
     print(istft.shape)
-    return power_law(istft, inv=True)
+    if with_power_law:
+        return power_law(istft, inv=True)
+    else:
+        return istft
 
 def cRM(clean, mix, K=10, C=0.1):
     M = build_cRM(clean, mix)
