@@ -49,12 +49,14 @@ def mix_audio(speaker_paths, noise_path=None):
     sr = None
     for i in range(num_speakers):
         audio, audio_sr = librosa.load(speaker_paths[i], sr=None)
-        audio = audio / np.max(audio)
         if i == 0:
             mix = audio
             sr = audio_sr
         else:
             mix += audio
+    norm = np.max(np.abs(mix)) * 1.1
+    mix = mix/norm
+    
     noise_file = None
     if noise_path:
         noise_files = [f for f in os.listdir(noise_path) if os.path.isfile(os.path.join(noise_path, f))]
