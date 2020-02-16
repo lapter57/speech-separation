@@ -4,8 +4,10 @@ import avhandler as avh
 import os
 import pandas as pd
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor
 
-def download_audio(path, dest, start_idx, end_idx, length=None):
+
+def download_audio(executor, path, dest, start_idx, end_idx, length=None):
     df = pd.read_csv(path,
                      usecols=[0,1,2],
                      names=["youtube_id", "start_time", "end_time"],
@@ -14,7 +16,7 @@ def download_audio(path, dest, start_idx, end_idx, length=None):
         os.mkdir(dest)
     except OSError:
         pass
-    id = 0
+    id = start_idx
     for i in range(start_idx, end_idx):
         youtube_id = df.loc[i,"youtube_id"]
         start_time = float(df.loc[i,"start_time"])
@@ -22,9 +24,10 @@ def download_audio(path, dest, start_idx, end_idx, length=None):
         if length == None:
             end_time = float(df.loc[i,"end_time"])
         filename = str(id) + ":" + youtube_id
-        if avh.download_audio(youtube_id, filename, path):
+        if avh.download_audio(youtube_id, filename, dest):
             id += 1
-        avh.cut_audio(youtube_id, start_time, end_time, filename, path, with_remove=True)
+            executor.submit(avh.cut_audio, youtube_id, start_time, end_time, filename, dest, "wav", True)
+        # avh.cut_audio(youtube_id, start_time, end_time, filename, dest, with_remove=True)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -42,4 +45,5 @@ if __name__ == "__main__":
     parser.add_argument("--length", action="store", type=float, dest="length",
                         default=3.0, help="Audio duration(default=3.0)")
     args = parser.parse_args()
-    download_audio(args.path, args.dest, args.start_idx, args.end_idx, args.length)
+    executor = ThreadPoolExecutor(max_workers=5)
+    download_audio(executor, args.path, args.dest, args.start_idx, args.end_idx, args.length)

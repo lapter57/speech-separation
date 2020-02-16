@@ -44,18 +44,22 @@ def build_mix_data(mix_path, speaker_paths, num_speakers=2, noise_path=None):
             filename += utils.NOISE_PREFIX + utils.basename(noise_file) + "."
         np.save(("{}/{}npy").format(mix_path, filename), mix)
 
-def build_crm_data(crm_path, mix_path, clean_path):
+def build_crm_data(crm_path, mix_path, clean_path, batch_size = 100):
     mix_files = utils.get_files(mix_path)
     clean_files = utils.get_files(clean_path)
-    mix_npys = np.array([(utils.basename(f), np.load(f)) for f in mix_files])
-    for mix_npy in mix_npys:
-        clean_filenames = utils.get_clean_in_mix(mix_npy[0])
-        for clean_filename in clean_filenames:
-            clean_file = utils.find_paths_contains(clean_filename, clean_files)[0]
-            clean_audio = np.load(clean_file)
-            cRM = utils.cRM(clean_audio, mix_npy[1])
-            filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
-            np.save(("{}/{}.npy").format(crm_path, filename), cRM)
+    if len(mix_files) < batch_size:
+        batch_size = 1
+    mix_files = np.array_split(mix_files, batch_size)
+    for mf in mix_files:
+        mix_npys = np.array([(utils.basename(f), np.load(f)) for f in mf])
+        for mix_npy in mix_npys:
+            clean_filenames = utils.get_clean_in_mix(mix_npy[0])
+            for clean_filename in clean_filenames:
+                clean_file = utils.find_paths_contains(clean_filename, clean_files)[0]
+                clean_audio = np.load(clean_file)
+                cRM = utils.cRM(clean_audio, mix_npy[1])
+                filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
+                np.save(("{}/{}.npy").format(crm_path, filename), cRM)
         
 def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None):
     mix_path, clean_path, crm_path = init_dirs(path)
@@ -65,9 +69,11 @@ def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None):
     speaker_paths = speaker_paths[:usage]
     
     build_clean_data(clean_path, speaker_paths)
+    print("Clean data was builded")
     build_mix_data(mix_path, speaker_paths, num_speakers, noise_path)
+    print("Mix data was builded")
     build_crm_data(crm_path, mix_path, clean_path)
-    
+    print("Crm data was builded")
     
 if __name__ == "__main__":
     parser = ArgumentParser()
