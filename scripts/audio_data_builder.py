@@ -31,10 +31,28 @@ def build_clean_data(clean_path, speaker_paths):
         filename = utils.basename(path)
         np.save(("{}/{}.npy").format(clean_path, filename), audio)
 
-def build_mix_data(mix_path, speaker_paths, num_speakers=2, noise_path=None):
+def split_with_cross_product(speaker_paths, num_speakers=2):
     split_speakers = np.array_split(speaker_paths, num_speakers)
     cross_product = itertools.product(*split_speakers)
-    for paths in cross_product:
+    return np.array([x for x in cross_product])
+
+def divide_batches(arr, n):
+    for i in range(0, len(arr), n):
+        yield arr[i:i+n]
+
+def split_with_seq(speaker_paths, num_speakers=2):
+    split = np.array([x for x in divide_batches(speaker_paths, num_speakers)])
+    return np.array([x for x in split if x.size == num_speakers])
+
+def split_speakers(speaker_paths, num_speakers=2, mode="cp"):
+    switcher = {
+        "cp": lambda: split_with_cross_product(speaker_paths, num_speakers),
+        "seq": lambda: split_with_seq(speaker_paths, num_speakers),
+    }
+    return switcher.get(mode)()
+
+def build_mix_data(mix_path, speaker_paths, num_speakers=2, noise_path=None, mode="cp"):
+    for paths in split_speakers(speaker_paths, num_speakers, mode):
         mix, noise_file = avh.mix_audio(paths, noise_path)
         mix = utils.stft(mix)
         filename = ""
@@ -61,21 +79,21 @@ def build_crm_data(crm_path, mix_path, clean_path, batch_size = 100):
                 filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
                 np.save(("{}/{}.npy").format(crm_path, filename), cRM)
         
-def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None):
+def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None, mode="cp"):
     mix_path, clean_path, crm_path = init_dirs(path)
     
     speaker_paths = utils.get_files(speaker_path)
     np.random.shuffle(speaker_paths)
     speaker_paths = speaker_paths[:usage]
-    
     build_clean_data(clean_path, speaker_paths)
     print("Clean data was builded")
-    build_mix_data(mix_path, speaker_paths, num_speakers, noise_path)
+    build_mix_data(mix_path, speaker_paths, num_speakers, noise_path, mode)
     print("Mix data was builded")
     build_crm_data(crm_path, mix_path, clean_path)
     print("Crm data was builded")
     
 if __name__ == "__main__":
+    modes=["cp", "seq"]
     parser = ArgumentParser()
     parser.add_argument("--path", action="store",
                         dest="path", required=True,
@@ -92,7 +110,10 @@ if __name__ == "__main__":
     parser.add_argument("--noise", action="store",
                         dest="noise_path",
                         help="Path to the folder where the audio data of the noise is stored. If specified, noise will be used during build")
+    parser.add_argument("--mode", choices=modes, action="store", 
+                        dest="mode", default="cp", 
+                        help="Generation mode for mix data (default=cp)")
     args = parser.parse_args()
     
     build(args.path, args.speaker_path, args.usage,
-          args.num_speakers, args.noise_path)
+          args.num_speakers, args.noise_path, args.mode)
