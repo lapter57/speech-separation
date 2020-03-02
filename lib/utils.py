@@ -34,7 +34,7 @@ def icRM(mix, cRM, K=10, C=0.1):
     clean = np.zeros_like(M)
     clean[:,:,0] = M[:,:,0] * mix[:,:,0] - M[:,:,1] * mix[:,:,1]
     clean[:,:,1] = M[:,:,0] * mix[:,:,1] + M[:,:,1] * mix[:,:,0]
-    return clean
+    return clean.astype("float32")
     
 def build_cRM(clean, mix):
     M = np.zeros(mix.shape)

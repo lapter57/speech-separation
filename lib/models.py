@@ -5,7 +5,7 @@ from tensorflow.keras.initializers import he_normal
 
 def conv2d(filters, kernel_size, dilation_rate, name, model):
     conv = Conv2D(filters, kernel_size=kernel_size, strides=(1, 1), 
-                          padding='same', dilation_rate=dilation_rate, name=name)(model)
+                  padding='same', dilation_rate=dilation_rate, name=name)(model)
     conv = BatchNormalization()(conv)
     return ReLU()(conv)
 
@@ -28,10 +28,14 @@ def build_ao_model(n_speakers):
     conv15 = conv2d(8, (1, 1), (1, 1), 'conv15', conv14)
     AVfusion = Reshape((298, 8 * 257))(conv15)   
     lstm = Bidirectional(LSTM(200, return_sequences=True))(AVfusion)
-    fc1 = Dense(600, name="fc1", activation='relu', kernel_initializer=he_normal(seed=27))(lstm)
-    fc2 = Dense(600, name="fc2", activation='relu', kernel_initializer=he_normal(seed=42))(fc1)
-    fc3 = Dense(600, name="fc3", activation='relu', kernel_initializer=he_normal(seed=65))(fc2)
-    complex_mask = Dense(257 * 2 * n_speakers, name="complex_mask", kernel_initializer=he_normal(seed=65))(fc3)
+    fc1 = Dense(600, name="fc1", activation='relu',
+                kernel_initializer=he_normal(seed=27))(lstm)
+    fc2 = Dense(600, name="fc2", activation='relu',
+                kernel_initializer=he_normal(seed=42))(fc1)
+    fc3 = Dense(600, name="fc3", activation='relu',
+                kernel_initializer=he_normal(seed=65))(fc2)
+    complex_mask = Dense(257 * 2 * n_speakers, name="complex_mask",
+                         kernel_initializer=he_normal(seed=65))(fc3)
     complex_mask_out = Reshape((298, 257, 2, n_speakers))(complex_mask)
     
     AO_model = Model(inputs=model_input, outputs=complex_mask_out)
