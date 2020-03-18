@@ -1,4 +1,3 @@
-import wget
 import os
 import audio_data_builder as adb
 import downloader as dr
