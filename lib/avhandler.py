@@ -16,11 +16,13 @@ def url_video(youtube_id):
 
 def extract_data(video_file, audio_path, frames_path, 
                  filename, audio_ext, sample_rate, fps):
-    audio_file = os.path.join(audio_path, FILE.format(filename, audio_ext))
-    cmd = EXTRACT_AUDIO.format(video_file=video_file,
-                               audio_ext=audio_ext,
-                               sample_rate=sample_rate,
-                               audio_file=audio_file)
+    cmd = ""
+    if audio_path != None:
+        audio_file = os.path.join(audio_path, FILE.format(filename, audio_ext))
+        cmd += EXTRACT_AUDIO.format(video_file=video_file,
+                                   audio_ext=audio_ext,
+                                   sample_rate=sample_rate,
+                                   audio_file=audio_file)
     if frames_path != None:
         frame_files = os.path.join(frames_path, FILE.format(filename + ":%02d", "jpg"))
         cmd += EXTRACT_FRAMES.format(video_file=video_file,
@@ -31,7 +33,7 @@ def extract_data(video_file, audio_path, frames_path,
     os.remove(video_file)   
 
 def download_data(youtube_id, filename, start_time, 
-                  end_time, audio_path="", frames_path=None, fps=25,
+                  end_time, audio_path, frames_path, fps=25,
                   video_ext="mp4", audio_ext="wav", sample_rate=16000):
     video_file = os.path.join(tempfile.gettempdir(), FILE.format(filename, video_ext))
     cmd = DL_VIDEO.format(url=url_video(youtube_id),
