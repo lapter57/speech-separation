@@ -10,18 +10,14 @@ from argparse import ArgumentParser
 
 DIR = ("{path}/{dirname}")
 
-def init_dir(path):
-    if not os.path.isdir(path):
-        os.mkdir(path) 
-
 def init_dirs(path):
-    init_dir(path)
+    utils.make_dir(path)
     mix_path = DIR.format(path=path, dirname="mix")
     clean_path = DIR.format(path=path, dirname="clean")
     crm_path = DIR.format(path=path, dirname="crm")
-    init_dir(mix_path)
-    init_dir(clean_path)
-    init_dir(crm_path)
+    utils.make_dir(mix_path)
+    utils.make_dir(clean_path)
+    utils.make_dir(crm_path)
     return mix_path, clean_path, crm_path
 
 def build_clean_data(clean_path, speaker_paths):
