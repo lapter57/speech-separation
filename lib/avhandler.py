@@ -1,47 +1,49 @@
 import os
 import librosa
+import tempfile
 import numpy as np
 import random
+from concurrent.futures import ThreadPoolExecutor
 
-DL_AUDIO = ("youtube-dl -x --audio-format {ext} -o {file} {url};")
-CHANGE_SAMPLE_RATE = ("ffmpeg -i {old_file} -ar {sample_rate} -ac 1 {new_file};")
-CUT_AUDIO = ("sox {file} {trim_file} trim {start_time} {length};")
+DL_VIDEO = ("ffmpeg -i $(youtube-dl -f \"mp4\" --get-url {url}) -c:v h264 -c:a copy -ss {start_time} -to {end_time} {file};")
+EXTRACT_AUDIO = ("ffmpeg -i {video_file} -f {audio_ext} -ar {sample_rate} -ac 1 -vn {audio_file};")
+EXTRACT_FRAMES = ("ffmpeg -i {video_file} -vf fps={fps} {file};")
 FILE = ("{}.{}")
+executor = ThreadPoolExecutor(max_workers=5)
 
 def url_video(youtube_id):
     return "https://www.youtube.com/watch?v=" + youtube_id
 
-def download_audio(youtube_id, filename, path="", ext="wav", sample_rate=16000):
-    tmp_file = os.path.join(path, FILE.format("temp_" + filename, ext))
-    file = os.path.join(path, FILE.format(filename, ext))
-    cmd = DL_AUDIO.format(ext=ext,
-                          file=tmp_file, 
-                          url=url_video(youtube_id))
-    cmd += CHANGE_SAMPLE_RATE.format(old_file=tmp_file, 
-                                     new_file=file, 
-                                     sample_rate=sample_rate)
+def extract_data(video_file, audio_path, frames_path, 
+                 filename, audio_ext, sample_rate, fps):
+    audio_file = os.path.join(audio_path, FILE.format(filename, audio_ext))
+    cmd = EXTRACT_AUDIO.format(video_file=video_file,
+                               audio_ext=audio_ext,
+                               sample_rate=sample_rate,
+                               audio_file=audio_file)
+    if frames_path != None:
+        frame_files = os.path.join(frames_path, FILE.format(filename + ":%02d", "jpg"))
+        cmd += EXTRACT_FRAMES.format(video_file=video_file,
+                                     fps=fps,
+                                     sample_rate=sample_rate,
+                                     file=frame_files)
     os.system(cmd)
-    try:
-        os.remove(tmp_file)
+    os.remove(video_file)   
+
+def download_data(youtube_id, filename, start_time, 
+                  end_time, audio_path="", frames_path=None, fps=25,
+                  video_ext="mp4", audio_ext="wav", sample_rate=16000):
+    video_file = os.path.join(tempfile.gettempdir(), FILE.format(filename, video_ext))
+    cmd = DL_VIDEO.format(url=url_video(youtube_id),
+                          start_time=start_time,
+                          end_time=end_time,
+                          file=video_file)
+    os.system(cmd)
+    if os.path.exists(video_file):
+        executor.submit(extract_data, video_file, audio_path, 
+                        frames_path, filename, audio_ext, sample_rate, fps)
         return True
-    except OSError:
-        return False
-    
-def cut_audio(youtube_id, start_time, end_time, filename, path="", ext="wav", with_remove=False):
-    file = os.path.join(path, FILE.format(filename, ext))
-    trim_file= os.path.join(path, FILE.format("trim_" + filename, ext))
-    length = end_time - start_time
-    cmd = CUT_AUDIO.format(file=file,
-                           trim_file=trim_file,
-                           start_time=start_time, 
-                           length=length)
-    os.system(cmd)
-    if with_remove:
-        try:
-            os.remove(file)
-            os.rename(trim_file, file)
-        except OSError:
-            pass
+    return False
     
 def mix_audio(speaker_paths, noise_path=None):
     num_speakers = len(speaker_paths)
@@ -55,7 +57,7 @@ def mix_audio(speaker_paths, noise_path=None):
         else:
             mix += audio
     norm = np.max(np.abs(mix)) * 1.1
-    mix = mix/norm
+    mix = mix / norm
     
     noise_file = None
     if noise_path:
