@@ -35,10 +35,10 @@ def build_video_conv_layers():
     model = Sequential()
     model = conv2d(256, (7, 1), (1, 1), 'v_conv1', model)
     model = conv2d(256, (5, 1), (1, 1), 'v_conv2', model)
-    model = conv2d(256, (5, 1), (1, 1), 'v_conv3', model)
-    model = conv2d(256, (5, 1), (2, 1), 'v_conv4', model)
-    model = conv2d(256, (5, 1), (4, 1), 'v_conv5', model)
-    model = conv2d(256, (5, 1), (8, 1), 'v_conv6', model)
+    model = conv2d(256, (5, 1), (2, 1), 'v_conv3', model)
+    model = conv2d(256, (5, 1), (4, 1), 'v_conv4', model)
+    model = conv2d(256, (5, 1), (8, 1), 'v_conv5', model)
+    model = conv2d(256, (5, 1), (16, 1), 'v_conv6', model)
     return model
 
 def UpSampling2DBilinear(size):
