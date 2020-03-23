@@ -5,25 +5,26 @@ import utils
 import pandas as pd
 from argparse import ArgumentParser
 
-def make_dirs(audio_path, frames_path):
-    utils.make_dir(audio_path)
-    utils.make_dir(frames_path)
+def make_dirs(audio_path, frames_path, 
+              remake_audio_dir=False, remake_frames_dir=False):
+    utils.make_dir(audio_path, remake_audio_dir)
+    utils.make_dir(frames_path, remake_frames_dir)
 
 def download_data(csv_path, start_idx, end_idx, 
                   audio_path, frames_path, length=None,
-                  fps=25,video_ext="mp4", audio_ext="wav", sample_rate=16000):
+                  fps=25, video_ext="mp4", audio_ext="wav", 
+                  sample_rate=16000, remake_audio_dir=False,
+                  remake_frames_dir=False):
     df = pd.read_csv(csv_path,
                      usecols=[0,1,2],
                      names=["youtube_id", "start_time", "end_time"],
                      comment="#")
-    make_dirs(audio_path, frames_path)
+    make_dirs(audio_path, frames_path, remake_audio_dir, remake_frames_dir)
     id = start_idx
     for i in range(start_idx, end_idx):
         youtube_id = df.loc[i, "youtube_id"]
         start_time = float(df.loc[i, "start_time"])
-        end_time = start_time + length
-        if length == None:
-            end_time = float(df.loc[i, "end_time"])
+        end_time = float(df.loc[i, "end_time"]) if length == None else start_time + length
         filename = str(id) + ":" + youtube_id
         if avh.download_data(youtube_id, filename, start_time, 
                              end_time, audio_path, frames_path):
