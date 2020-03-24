@@ -4,6 +4,8 @@ import avhandler as avh
 import utils
 import pandas as pd
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor
+executor = ThreadPoolExecutor(max_workers=5)
 
 def make_dirs(audio_path, frames_path, 
               remake_audio_dir=False, remake_frames_dir=False):
@@ -14,7 +16,7 @@ def download_data(csv_path, start_idx, end_idx,
                   audio_path, frames_path, length=None,
                   fps=25, video_ext="mp4", audio_ext="wav", 
                   sample_rate=16000, remake_audio_dir=False,
-                  remake_frames_dir=False):
+                  remake_frames_dir=False, wait_tasks=True):
     df = pd.read_csv(csv_path,
                      usecols=[0,1,2],
                      names=["youtube_id", "start_time", "end_time"],
@@ -26,9 +28,10 @@ def download_data(csv_path, start_idx, end_idx,
         start_time = float(df.loc[i, "start_time"])
         end_time = float(df.loc[i, "end_time"]) if length == None else start_time + length
         filename = str(id) + ":" + youtube_id
-        if avh.download_data(youtube_id, filename, start_time, 
-                             end_time, audio_path, frames_path):
-            id += 1
+        executor.submit(avh.download_data, youtube_id, filename, start_time, end_time, audio_path, frames_path)
+        id += 1
+    if wait_tasks:
+        executor.shutdown(wait=True)
 
 if __name__ == "__main__":
     parser = ArgumentParser()

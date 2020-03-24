@@ -5,10 +5,10 @@ import numpy as np
 import shutil
 import random
 
-DL_VIDEO = ("ffmpeg -i $(youtube-dl -f \"mp4\" --get-url {url}) -ss {start_time} -to {end_time} {file};")
-EXTRACT_AUDIO = ("ffmpeg -i {video_file} -f {audio_ext} -ar {sample_rate} -ac 1 -vn {audio_file};")
+DL_VIDEO = ("ffmpeg -i $(youtube-dl -f \"mp4\" --get-url {url}) -ss {start_time} -to {end_time} {file} </dev/null > /dev/null 2>&1 ;")
+EXTRACT_AUDIO = ("ffmpeg -i {video_file} -f {audio_ext} -ar {sample_rate} -ac 1 -vn {audio_file} </dev/null > /dev/null 2>&1;")
 CUT_AUDIO = ("sox {file} {trim_file} trim {start_time} {length};")
-EXTRACT_FRAMES = ("ffmpeg -i {video_file} -vf fps={fps} {file};")
+EXTRACT_FRAMES = ("ffmpeg -i {video_file} -vf fps={fps} {file} </dev/null > /dev/null 2>&1;")
 FILE = ("{}.{}")
 
 def url_video(youtube_id):
@@ -63,12 +63,10 @@ def download_data(youtube_id, filename, start_time,
 def mix_audio(speaker_paths, noise_path=None):
     num_speakers = len(speaker_paths)
     mix = None
-    sr = None
     for i in range(num_speakers):
-        audio, audio_sr = librosa.load(speaker_paths[i], sr=None)
+        audio, _ = librosa.load(speaker_paths[i], sr=None)
         if i == 0:
             mix = audio
-            sr = audio_sr
         else:
             mix += audio
     norm = np.max(np.abs(mix)) * 1.1
@@ -78,7 +76,7 @@ def mix_audio(speaker_paths, noise_path=None):
     if noise_path:
         noise_files = [f for f in os.listdir(noise_path) if os.path.isfile(os.path.join(noise_path, f))]
         noise_file = random.choice(noise_files)
-        noise, noise_sr = librosa.load(os.path.join(noise_path, noise_file), sr=None)
+        noise, _ = librosa.load(os.path.join(noise_path, noise_file), sr=None)
         noise = noise / np.max(noise)
         mix += 0.3 * noise
     return mix, noise_file
