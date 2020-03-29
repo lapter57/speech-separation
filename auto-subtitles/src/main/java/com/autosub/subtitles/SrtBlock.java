@@ -66,9 +66,7 @@ public class SrtBlock {
             final var srtBlock = new SrtBlock(id, startTimeBlock, endTimeBlock);
             for (int i = 0; i < speakers.size(); i++) {
                 final var words = speakers.get(i).stream()
-                        .filter(wi -> (startTimeOf(wi) > startTimeBlock && endTimeOf(wi) <= endTimeBlock) ||
-                                (startTimeOf(wi) < startTimeBlock && startTimeBlock - startTimeOf(wi) < endTimeOf(wi) - startTimeBlock) ||
-                                (endTimeOf(wi) > endTimeBlock && endTimeBlock - startTimeOf(wi) >= endTimeOf(wi) - endTimeBlock))
+                        .filter(srtBlock::isWordInBlock)
                         .collect(Collectors.toList());
                 if (words.size() != 0) {
                     final var subtitle = subtitleFrom(words);
@@ -81,6 +79,16 @@ public class SrtBlock {
             id++;
         }
         return srtBlocks;
+    }
+
+    private boolean isWordInBlock(@NotNull final WordInfo word) {
+        final boolean exactlyIn = startTimeOf(word) > startTimeInMs &&
+                endTimeOf(word) <= endTimeInMs;
+        final boolean firstHalfInBlock = startTimeOf(word) < startTimeInMs &&
+                startTimeInMs - startTimeOf(word) < endTimeOf(word) - startTimeInMs;
+        final boolean secondHalfInBlock = endTimeOf(word) > endTimeInMs &&
+                endTimeInMs - startTimeOf(word) >= endTimeOf(word) - endTimeInMs;
+        return exactlyIn || firstHalfInBlock || secondHalfInBlock;
     }
 
     public long getId() {
