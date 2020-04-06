@@ -1,0 +1,13 @@
+argparse
+concurrent
+itertools
+keras
+librosa
+math
+matpotlib
+numpy
+os
+pandas
+random
+scipy
+sys
