@@ -75,7 +75,7 @@ def build_crm_data(crm_path, mix_path, clean_path, batch_size = 100):
                 filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
                 np.save(("{}/{}.npy").format(crm_path, filename), cRM)
         
-def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None, mode="cp"):
+def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None, mode="seq"):
     mix_path, clean_path, crm_path = init_dirs(path)
     
     speaker_paths = utils.get_files(speaker_path)
@@ -107,8 +107,8 @@ if __name__ == "__main__":
                         dest="noise_path",
                         help="Path to the folder where the audio data of the noise is stored. If specified, noise will be used during build")
     parser.add_argument("--mode", choices=modes, action="store", 
-                        dest="mode", default="cp", 
-                        help="Generation mode for mix data (default=cp)")
+                        dest="mode", default="seq", 
+                        help="Generation mode for mix data (default=seq)")
     args = parser.parse_args()
     
     build(args.path, args.speaker_path, args.usage,
