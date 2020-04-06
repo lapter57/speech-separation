@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
+import shutil
 
 NOISE_PREFIX = "n:"
 EPSILON = 1e-8
@@ -63,6 +64,15 @@ def recover_uncompressed_mask(M, K=10, C=0.1):
 def get_files(path):
     return np.array([os.path.join(path, f) for f in os.listdir(path) 
                      if os.path.isfile(os.path.join(path, f))])
+
+def make_dir(path, remake=False):
+    if path != None:
+        if os.path.exists(path):
+            if remake:
+                shutil.rmtree(path)
+                os.mkdir(path)
+        else:
+            os.mkdir(path)
 
 def basename(path):
     return os.path.splitext(os.path.basename(path))[0]
