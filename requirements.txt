@@ -1,13 +1,9 @@
 argparse
-concurrent
-itertools
+futures
 keras
 librosa
-math
-matpotlib
+matplotlib
 numpy
-os
 pandas
-random
 scipy
-sys
+tensorflow-gpu
