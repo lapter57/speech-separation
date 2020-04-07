@@ -9,8 +9,8 @@ executor = ThreadPoolExecutor(max_workers=5)
 
 def make_dirs(audio_path, frames_path, 
               remake_audio_dir=False, remake_frames_dir=False):
-    utils.make_dir(audio_path, remake_audio_dir)
-    utils.make_dir(frames_path, remake_frames_dir)
+    utils.make_dirs(audio_path, remake_audio_dir)
+    utils.make_dirs(frames_path, remake_frames_dir)
 
 def download_data(csv_path, start_idx, end_idx, 
                   audio_path, frames_path, length=None,

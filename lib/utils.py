@@ -65,14 +65,14 @@ def get_files(path):
     return np.array([os.path.join(path, f) for f in os.listdir(path) 
                      if os.path.isfile(os.path.join(path, f))])
 
-def make_dir(path, remake=False):
+def make_dirs(path, remake=False):
     if path != None:
         if os.path.exists(path):
             if remake:
                 shutil.rmtree(path)
-                os.mkdir(path)
+                os.makedirs(path)
         else:
-            os.mkdir(path)
+            os.makedirs(path)
 
 def basename(path):
     return os.path.splitext(os.path.basename(path))[0]

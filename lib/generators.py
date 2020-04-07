@@ -42,7 +42,7 @@ class AudioGenerator(keras.utils.Sequence):
 
 class AVGenerator(keras.utils.Sequence):
     
-    def __init__(self, mix_files, crm_files, emb_files, database_dir_path, 
+    def __init__(self, mix_files, crm_files, emb_files,
                  n_speakers, batch_size=6, shuffle=True):
         self.X1dim = (298, 257, 2)
         self.X2dim = (75, 1, 512, n_speakers)

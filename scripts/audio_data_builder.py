@@ -7,17 +7,19 @@ import numpy as np
 import librosa
 import itertools
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor
+executor = ThreadPoolExecutor(max_workers=5)
 
 DIR = ("{path}/{dirname}")
 
 def init_dirs(path):
-    utils.make_dir(path)
+    utils.make_dirs(path)
     mix_path = DIR.format(path=path, dirname="mix")
     clean_path = DIR.format(path=path, dirname="clean")
     crm_path = DIR.format(path=path, dirname="crm")
-    utils.make_dir(mix_path)
-    utils.make_dir(clean_path)
-    utils.make_dir(crm_path)
+    utils.make_dirs(mix_path)
+    utils.make_dirs(clean_path)
+    utils.make_dirs(crm_path)
     return mix_path, clean_path, crm_path
 
 def build_clean_data(clean_path, speaker_paths):
@@ -74,10 +76,10 @@ def build_crm_data(crm_path, mix_path, clean_path, batch_size = 100):
                 cRM = utils.cRM(clean_audio, mix_npy[1])
                 filename = ("clean:{} mix:{}").format(clean_filename, mix_npy[0])
                 np.save(("{}/{}.npy").format(crm_path, filename), cRM)
-        
-def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None, mode="seq"):
+
+def start_build(path, speaker_path, usage=2, 
+                num_speakers=2, noise_path=None, mode="seq"):
     mix_path, clean_path, crm_path = init_dirs(path)
-    
     speaker_paths = utils.get_files(speaker_path)
     np.random.shuffle(speaker_paths)
     speaker_paths = speaker_paths[:usage]
@@ -87,7 +89,16 @@ def build(path, speaker_path, usage=2, num_speakers=2, noise_path=None, mode="se
     print("Mix data was builded")
     build_crm_data(crm_path, mix_path, clean_path)
     print("Crm data was builded")
-    
+ 
+
+def build(path, speaker_path, usage=2, 
+          num_speakers=2, noise_path=None, 
+          mode="seq", background=False):
+    if (background):
+        executor.submit(start_build, path, speaker_path, usage, num_speakers, noise_path, mode)
+    else:
+        start_build(path, speaker_path, usage, num_speakers, noise_path, mode)
+   
 if __name__ == "__main__":
     modes=["cp", "seq"]
     parser = ArgumentParser()

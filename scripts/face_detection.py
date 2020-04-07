@@ -6,6 +6,7 @@ import insightface
 import cv2
 import numpy as np
 from tqdm import tqdm
+import shutil
 from argparse import ArgumentParser
 
 
@@ -20,9 +21,16 @@ def face_detect(image_path, model_retinaface, model_arcface):
         return emb
     return np.zeros((1, 512))
 
-def save_embeddings(frames_path, emb_path, 
-                    model_retinaface, model_arcface):
-    utils.make_dir(emb_path)
+def init_models(ctx_id, nms):
+    model_retinaface = insightface.model_zoo.get_model('retinaface_r50_v1')
+    model_retinaface.prepare(ctx_id = args.ctx_id, nms=args.nms)
+    model_arcface = insightface.model_zoo.get_model('arcface_r100_v1')
+    model_arcface.prepare(ctx_id = args.ctx_id)
+    return model_retinaface, model_arcface
+
+def save_embeddings(frames_path, emb_path, ctx_id=-1, nms=0.4, remove_frames=True):
+    model_retinaface, model_arcface = init_models(args.ctx_id, args.nms)
+    utils.make_dirs(emb_path)
     num_series_of_frames = int(len([name for name in os.listdir(frames_path)]) / 75)
     for i in tqdm(range(num_series_of_frames)):
         file = [name for name in os.listdir(frames_path) if name.startswith(str(i))][0]
@@ -33,13 +41,9 @@ def save_embeddings(frames_path, emb_path,
             embs[i - 1, : ] = face_detect(os.path.join(frames_path, filename), 
                                           model_retinaface, model_arcface)
         np.save(os.path.join(emb_path, "{}.npy".format(prefix_name)), embs)
+    if remove_frames:
+        shutil.rmtree(frames_path)
 
-def init_models(ctx_id, nms):
-    model_retinaface = insightface.model_zoo.get_model('retinaface_r50_v1')
-    model_retinaface.prepare(ctx_id = args.ctx_id, nms=args.nms)
-    model_arcface = insightface.model_zoo.get_model('arcface_r100_v1')
-    model_arcface.prepare(ctx_id = args.ctx_id)
-    return model_retinaface, model_arcface
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -56,5 +60,4 @@ if __name__ == "__main__":
                         help="The nms threshold (default=0.4)")
     args = parser.parse_args()
 
-    model_retinaface, model_arcface = init_models(args.ctx_id, args.nms)
-    save_embeddings(args.frames_path, args.emb_path, model_retinaface, model_arcface)
+    save_embeddings(args.frames_path, args.emb_path, args.ctx_id, args.nms)

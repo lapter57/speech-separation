@@ -1,9 +1,12 @@
 argparse
 futures
+insightface
 keras
 librosa
 matplotlib
 numpy
+opencv-python
 pandas
 scipy
 tensorflow-gpu
+tqdm
