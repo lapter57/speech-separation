@@ -1,9 +1,12 @@
 argparse
 futures
 insightface
+jupyterlab
 keras
 librosa
 matplotlib
+mxnet
+mxnet-cu100
 numpy
 opencv-python
 pandas

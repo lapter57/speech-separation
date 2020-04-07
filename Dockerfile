@@ -17,7 +17,6 @@ RUN apt-get install -y software-properties-common && \
 
 RUN pip3 install --upgrade pip
 RUN pip3 install --prefix /usr/local --upgrade youtube-dl
-RUN pip3 install jupyterlab mxnet mxnet-cu1000 insighface
 RUN python3 -m pip install ipykernel
 RUN python3 -m ipykernel install --user
 
