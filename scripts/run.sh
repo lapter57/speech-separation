@@ -14,4 +14,4 @@ docker run --gpus all --rm nvidia/cuda nvidia-smi
 
 # Docker run with model
 SAVED_PATH="$( realpath ../data/saved )"
-docker run --gpus all --name spesep -p 8888:8888 -v ${SAVED_PATH}:/usr/dev/speech-separation/saved --rm lapter57/speech-separation
+docker run --gpus all --name spesep -p 8888:8888 -v ${SAVED_PATH}:/usr/dev/speech-separation/data/saved --rm lapter57/speech-separation
