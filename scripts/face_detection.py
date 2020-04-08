@@ -15,7 +15,6 @@ def face_detect(image_path, model_retinaface, model_arcface):
     faces, landmarks = model_retinaface.detect(img)
     if len(faces) != 0:
         box = faces[0].astype(np.int).flatten()
-        print(str(box))
         box[box < 0] = 0
         crop_img = img[box[1]:box[3], box[0]:box[2]]
         crop_img = cv2.resize(crop_img, (112, 112))
