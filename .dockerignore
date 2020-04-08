@@ -3,4 +3,4 @@ articles/*
 articles
 README.md
 LICENSE
-
+scripts/run.sh

@@ -23,6 +23,8 @@ RUN python3 -m ipykernel install --user
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+RUN chmod +x scripts/run.sh
+
 EXPOSE 8888
 
 CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8888", "--no-browser", "--allow-root"]
