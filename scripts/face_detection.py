@@ -15,6 +15,8 @@ def face_detect(image_path, model_retinaface, model_arcface):
     faces, landmarks = model_retinaface.detect(img)
     if len(faces) != 0:
         box = faces[0].astype(np.int).flatten()
+        print(str(box))
+        box[box < 0] = 0
         crop_img = img[box[1]:box[3], box[0]:box[2]]
         crop_img = cv2.resize(crop_img, (112, 112))
         emb = model_arcface.get_embedding(crop_img)
@@ -23,24 +25,26 @@ def face_detect(image_path, model_retinaface, model_arcface):
 
 def init_models(ctx_id, nms):
     model_retinaface = insightface.model_zoo.get_model('retinaface_r50_v1')
-    model_retinaface.prepare(ctx_id = args.ctx_id, nms=args.nms)
+    model_retinaface.prepare(ctx_id=ctx_id, nms=nms)
     model_arcface = insightface.model_zoo.get_model('arcface_r100_v1')
-    model_arcface.prepare(ctx_id = args.ctx_id)
+    model_arcface.prepare(ctx_id=ctx_id)
     return model_retinaface, model_arcface
 
 def save_embeddings(frames_path, emb_path, ctx_id=-1, nms=0.4, remove_frames=True):
-    model_retinaface, model_arcface = init_models(args.ctx_id, args.nms)
+    model_retinaface, model_arcface = init_models(ctx_id, nms)
     utils.make_dirs(emb_path)
     num_series_of_frames = int(len([name for name in os.listdir(frames_path)]) / 75)
     for i in tqdm(range(num_series_of_frames)):
-        file = [name for name in os.listdir(frames_path) if name.startswith(str(i))][0]
-        prefix_name = ":".join(file.split(":", 2)[:2])
-        embs = np.zeros((75, 1, 512))
-        for j in range(1, 76):
-            filename = prefix_name + ":{:0>2d}.jpg".format(j)
-            embs[i - 1, : ] = face_detect(os.path.join(frames_path, filename), 
+        found_files = [name for name in os.listdir(frames_path) if name.startswith(str(i))]
+        if (len(found_files) != 0):
+            file = found_files[0]
+            prefix_name = ":".join(file.split(":", 2)[:2])
+            embs = np.zeros((75, 1, 512))
+            for j in range(1, 76):
+                filename = prefix_name + ":{:0>2d}.jpg".format(j)
+                embs[i - 1, : ] = face_detect(os.path.join(frames_path, filename), 
                                           model_retinaface, model_arcface)
-        np.save(os.path.join(emb_path, "{}.npy".format(prefix_name)), embs)
+            np.save(os.path.join(emb_path, "{}.npy".format(prefix_name)), embs)
     if remove_frames:
         shutil.rmtree(frames_path)
 
