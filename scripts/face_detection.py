@@ -4,9 +4,10 @@ import utils
 import os
 import insightface
 import cv2
+import shutil
+import math
 import numpy as np
 from tqdm import tqdm
-import shutil
 from argparse import ArgumentParser
 
 
@@ -32,16 +33,16 @@ def init_models(ctx_id, nms):
 def save_embeddings(frames_path, emb_path, ctx_id=-1, nms=0.4, remove_frames=True):
     model_retinaface, model_arcface = init_models(ctx_id, nms)
     utils.make_dirs(emb_path)
-    num_series_of_frames = int(len([name for name in os.listdir(frames_path)]) / 75)
-    for i in tqdm(range(num_series_of_frames)):
-        found_files = [name for name in os.listdir(frames_path) if name.startswith(str(i))]
+    ids = set([int(name.split(":")[0]) for name in os.listdir(frames_path)])
+    for id in ids:
+        found_files = [name for name in os.listdir(frames_path) if name.startswith(str(id))]
         if (len(found_files) != 0):
             file = found_files[0]
             prefix_name = ":".join(file.split(":", 2)[:2])
             embs = np.zeros((75, 1, 512))
             for j in range(1, 76):
                 filename = prefix_name + ":{:0>2d}.jpg".format(j)
-                embs[i - 1, : ] = face_detect(os.path.join(frames_path, filename), 
+                embs[j - 1, : ] = face_detect(os.path.join(frames_path, filename), 
                                           model_retinaface, model_arcface)
             np.save(os.path.join(emb_path, "{}.npy".format(prefix_name)), embs)
     if remove_frames:
