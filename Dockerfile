@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow:2.0.0-gpu
 
 RUN mkdir -p /usr/dev/speech-separation
 WORKDIR /usr/dev/speech-separation
@@ -23,6 +23,6 @@ RUN python3 -m ipykernel install --user
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-EXPOSE 8888
+EXPOSE 8085
 
-CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8888", "--no-browser", "--allow-root"]
+CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8085", "--no-browser", "--allow-root"]
