@@ -56,28 +56,7 @@ def download_data(youtube_id, filename, start_time,
     os.system(cmd)
     if os.path.exists(video_file):
         extract_data(video_file, audio_path, frames_path, filename, audio_ext, sample_rate, fps)
-        cut_audio(youtube_id, audio_path, filename, 0, 3)
+        #cut_audio(youtube_id, audio_path, filename, 0, 3)
         return True
     return False
-    
-def mix_audio(speaker_paths, noise_path=None):
-    num_speakers = len(speaker_paths)
-    mix = None
-    for i in range(num_speakers):
-        audio, _ = librosa.load(speaker_paths[i], sr=None)
-        if i == 0:
-            mix = audio
-        else:
-            mix += audio
-    norm = np.max(np.abs(mix)) * 1.1
-    mix = mix / norm
-    
-    noise_file = None
-    if noise_path:
-        noise_files = [f for f in os.listdir(noise_path) if os.path.isfile(os.path.join(noise_path, f))]
-        noise_file = random.choice(noise_files)
-        noise, _ = librosa.load(os.path.join(noise_path, noise_file), sr=None)
-        noise = noise / np.max(noise)
-        mix += 0.3 * noise
-    return mix, noise_file
-        
+
