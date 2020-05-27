@@ -9,6 +9,7 @@ import cv2
 import shutil
 import math
 import itertools
+
 from tqdm import tqdm
 from audio import Audio
 from argparse import ArgumentParser

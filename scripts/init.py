@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append("../lib")
 import utils
+
 from config import Config
 from downloader import Downloader
 from data_builder import DataBuilder

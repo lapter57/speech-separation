@@ -37,4 +37,4 @@ ENV LC_ALL en_US.UTF-8
 
 EXPOSE 8085
 
-CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8085", "--no-browser", "--allow-root"]
+ENTRYPOINT ["/bin/bash"]
