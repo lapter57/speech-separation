@@ -53,6 +53,9 @@ class Trainer():
             self.step = checkpoint['step']
             self.logger.info("Starting new training run")
 
+    def predict(self, mix. embs):
+        return self.model(mix) if embs is None else self.model(mix, embs)
+
     def get_estimated_specs(self, mix, masks_batch):
         sep_list = list()
         for i in range(self.config.data.num_speakers):
@@ -71,11 +74,7 @@ class Trainer():
                 mix = mix.cuda()
                 targets = targets.cuda()
     
-                masks = None
-                if embs is None:
-                    masks = self.model(mix)
-                else:
-                    masks = self.model(mix, embs)
+                masks = self.predict(mix, embs) 
                # masks[masks == 0] += 0.000001
                # masks[masks == 1] -= 0.000001
                # masks = torch.log(masks / (1 - masks)) 
@@ -115,11 +114,7 @@ class Trainer():
                     mix = mix.cuda()
                     targets = targets.cuda()
 
-                    masks = None
-                    if embs is None:
-                        masks = self.model(mix)
-                    else:
-                        masks = self.model(mix, embs)
+                    masks = self.predict(mix, embs) 
                    # masks[masks == 0] += 0.000001
                    # masks[masks == 1] -= 0.000001
                    # masks = torch.log(masks / (1 - masks)) 
