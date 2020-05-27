@@ -19,8 +19,8 @@ class Trainer():
         self.config = config
         self.pt_dir = os.path.join(config.log.chkpt_dir, config.log.model_name)
         self.log_dir = os.path.join(config.log.log_dir, config.log.model_name)
-        os.makedirs(pt_dir, exist_ok=True)
-        os.makedirs(log_dir, exist_ok=True)
+        os.makedirs(self.pt_dir, exist_ok=True)
+        os.makedirs(self.log_dir, exist_ok=True)
 
         logging.basicConfig(
            level=logging.INFO,
@@ -107,7 +107,7 @@ class Trainer():
 
         self.model.train()
 
-    def train(self)
+    def train(self):
         try:
             while True:
                 self.model.train()

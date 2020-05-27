@@ -24,7 +24,7 @@ class CustomWriter(SummaryWriter):
         for i in range(len(targets_wavs)):
             self.add_audio(('target_wav_{}').format(i), targets_wavs[i], step, self.config.audio.sample_rate)
             self.add_audio(('estimated_wav_{}').format(i), est_wavs[i], step, self.config.audio.sample_rate)
-            self.add_image(('data/target_spectrogram{}'.format(i),
+            self.add_image(('data/target_spectrogram{}').format(i),
                 plot_spectrogram_to_numpy(target_specs[i]), step, dataformats='HWC')
             self.add_image(('result/estimated_spectrogram{}').format(i),
                 plot_spectrogram_to_numpy(est_specs[0]), step, dataformats='HWC')
