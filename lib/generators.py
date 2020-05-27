@@ -1,6 +1,4 @@
 import os
-import sys
-sys.path.append("../lib")
 import utils
 import numpy as np
 from tensorflow import keras
