@@ -1,7 +1,6 @@
 import os
 import yaml
 
-
 def load_config(filename):
     stream = open(filename, 'r')
     docs = yaml.load_all(stream)
@@ -46,3 +45,4 @@ class Config(Dotdict):
     __getattr__ = Dotdict.__getitem__
     __setattr__ = Dotdict.__setitem__
     __delattr__ = Dotdict.__delitem__
+

@@ -1,4 +1,5 @@
 import numpy as np
+
 from tensorboardX import SummaryWriter
 from plotting import plot_spectrogram_to_numpy
 
@@ -33,4 +34,3 @@ class CustomWriter(SummaryWriter):
             self.add_image(('result/estimation_error_sq{}').format(i),
                 plot_spectrogram_to_numpy(np.square(est_specs[i] - target_specs[i])), step, dataformats='HWC')
 
-        

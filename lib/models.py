@@ -3,40 +3,41 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class AudioStream(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super(AudioStream, self).__init__()
+        self.config = config
 
-        self.conv = nn.sequential(
-            nn.conv2d(in_channels=2, out_channels=96, kernel_size=(1, 7), padding=(0, 3), dilation=(1, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(7, 1), padding=(3, 0), dilation=(1, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(2, 2), dilation=(1, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(4, 2), dilation=(2, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(8, 2), dilation=(4, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(16, 2), dilation=(8, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(32, 2), dilation=(16, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(64, 2), dilation=(32, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(2, 2), dilation=(1, 1)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(4, 4), dilation=(2, 2)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(8, 8), dilation=(4, 4)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(16, 16), dilation=(8, 8)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(32, 32), dilation=(16, 16)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(64, 64), dilation=(32, 32)),
-            nn.batchnorm2d(96), nn.relu(),
-            nn.conv2d(in_channels=96, out_channels=8, kernel_size=(1, 1), padding=(0, 0), dilation=(1, 1)),
-            nn.batchnorm2d(8), nn.relu()
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels=2, out_channels=96, kernel_size=(1, 7), padding=(0, 3), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(7, 1), padding=(3, 0), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(2, 2), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(4, 2), dilation=(2, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(8, 2), dilation=(4, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(16, 2), dilation=(8, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(32, 2), dilation=(16, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(64, 2), dilation=(32, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(2, 2), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(4, 4), dilation=(2, 2)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(8, 8), dilation=(4, 4)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(16, 16), dilation=(8, 8)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(32, 32), dilation=(16, 16)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(64, 64), dilation=(32, 32)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=8, kernel_size=(1, 1), padding=(0, 0), dilation=(1, 1)),
+            nn.BatchNorm2d(8), nn.ReLU()
         )
     
     def forward(self, x):
@@ -47,11 +48,12 @@ class AudioStream(nn.Module):
         # x: [B, 8, T, F]
 
 class VisualStream(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super(VisualStream, self).__init__()
+        self.config = config
 
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=1024, out_channels=256, kernel_size=(7, 1), padding=(3, 0), dilation=(1, 1)),
+            nn.Conv2d(in_channels=512, out_channels=256, kernel_size=(7, 1), padding=(3, 0), dilation=(1, 1)),
             nn.BatchNorm2d(256), nn.ReLU(),
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(5, 1), padding=(2, 0), dilation=(1, 1)),
             nn.BatchNorm2d(256), nn.ReLU(),
@@ -77,7 +79,7 @@ class VisualStream(nn.Module):
             # v: [B, 256, num_frames, 1]
             v = v.permute(0, 3, 1, 2)
             # v: [B, 1, 256, num_frames]
-            v = nn.functional.interpolate(v, size=(256, config.audio.num_freq), mode="bilinear")
+            v = nn.functional.interpolate(v, size=(256, self.config.audio.num_freq), mode="bilinear")
             # v: [B, 1, 256, F]
             v = v.permute(0, 2, 3, 1)
             # v: [B, 256, F, 1]
@@ -93,7 +95,7 @@ class FusionStream(nn.Module):
         self.config = config
 
         lstm_input_size = 8 * config.audio.num_time
-        lstm_input_size = lstm_input_size + 256 * config.face.num_faces if is_av else lstm_input_size
+        lstm_input_size = lstm_input_size + 256 * config.data.num_speakers if is_av else lstm_input_size
 
         self.blstm = nn.LSTM(
             lstm_input_size,
@@ -142,7 +144,7 @@ class AoModel(nn.Module):
         super(AoModel, self).__init__()
         self.config = config
         
-        self.audio_stream = AudioStream()
+        self.audio_stream = AudioStream(config)
         self.fusion_stream = FusionStream(config, False)
         
     def forward(self, x):
@@ -160,8 +162,8 @@ class AvModel(nn.Module):
         super(AvModel, self).__init__()
         self.config = config
 
-        self.audio_stream = AudioStream()
-        self.visual_stream = VisualStream()
+        self.audio_stream = AudioStream(config)
+        self.visual_stream = VisualStream(config)
         self.fusion_stream = FusionStream(config)
 
     def forward(self, a, v):
@@ -171,7 +173,7 @@ class AvModel(nn.Module):
         # a: [B, 8, T, F]
         a = a.contiguous().view((-1, a.shape[1] * a.shape[2], a.shape[3]))
         # a: [B, 8 * T, F]
-        v = self.video_stream(v)
+        v = self.visual_stream(v)
         # v: [B, 256 * num_speakers, F]
         fusion = torch.cat([v, a], dim=1)
         # fusion: [B, 256 * num_speakers + 8 * T, F]
@@ -179,5 +181,4 @@ class AvModel(nn.Module):
         # fusion: [B, F, 256 * num_speakers + 8 * T]
         return self.fusion_stream(fusion)
         # fusion: [B, F, T, 2, 2]
-
 

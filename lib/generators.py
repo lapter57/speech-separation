@@ -1,8 +1,9 @@
 import os
+import sys
 import utils
 import numpy as np
-from tensorflow import keras
 import torch
+
 from audio import Audio
 from torch.utils.data import Dataset, DataLoader
 
@@ -54,44 +55,53 @@ def create_dataloader(config, train):
                       collate_fn=collate_fn,
                       batch_size=1, shuffle=False, num_workers=0)
 
-class CustomDataset(Dataset):
+class AudioDataset(Dataset):
     def __init__(self, config, train):
+        target_dir = "train" if train else "test"
         self.config = config
-        self.data_dir = os.path.join(config.data.audio.path, "train") if train else os.path.join(config.data.audio.path, "test")
+        self.data_dir = os.path.join(config.data.audio.path, target_dir)
         self.audio_handler = Audio(config)
 
         self.target_list = utils.get_files(os.path.join(self.data_dir, "clean"))
-        self.mix_list = np.random.shuffle(utils.get_files(os.path.join(self.data_dir, "mix")))
+        self.mix_list = utils.get_files(os.path.join(self.data_dir, "mix"))
+        np.random.shuffle(self.mix_list)
 
     def __len__(self):
         return len(self.mix_list)
 
-    def get_data(self, idx):
+    def __getitem__(self, idx):
         mix_file = self.mix_list[idx]
         mix = torch.Tensor(np.load(mix_file))
         mix_filename = utils.basename(mix_file)
-        return mix, mix_filename.split(".")
+        target_filenames = mix_filename.split(".")
 
-
-class AudioDataset(CustomDataset):
-    def __init__(self, config, train):
-        super().__init__(config, train)
-
-    def __getitem__(self, idx):
-        mix, target_filenames = self.get_data(idx)
         targets = list()
         for filename in target_filenames:
             targets.append(utils.find_paths_contains(filename, self.target_list)[0])
         targets = list(map(lambda t: torch.Tensor(np.load(t)), targets))
         return mix, torch.stack(targets, dim=3), None
 
-class AudioVisualDataset(CustomDataset):
+class AudioVisualDataset(Dataset):
     def __init__(self, config, train):
-        super().__init__(config, train)
-        self.emb_list = utils.get_files(os.path.join(config.data.video.emb_path, self.data_dir))
+        target_dir = "train" if train else "test"
+        self.config = config
+        self.data_dir = os.path.join(config.data.audio.path, target_dir)
+        self.audio_handler = Audio(config)
+
+        self.target_list = utils.get_files(os.path.join(self.data_dir, "clean"))
+        self.mix_list = utils.get_files(os.path.join(self.data_dir, "mix"))
+        np.random.shuffle(self.mix_list)
+        self.emb_list = utils.get_files(os.path.join(config.data.video.emb_path, target_dir))
+
+    def __len__(self):
+        return len(self.mix_list)
 
     def __getitem__(self, idx):
-        mix, target_filenames = self.get_data(idx)
+        mix_file = self.mix_list[idx]
+        mix = torch.Tensor(np.load(mix_file))
+        mix_filename = utils.basename(mix_file)
+        target_filenames = mix_filename.split(".")
+
         targets = list()
         embs = list()
         for filename in target_filenames:
@@ -99,5 +109,5 @@ class AudioVisualDataset(CustomDataset):
             embs.append(utils.find_paths_contains(filename, self.emb_list)[0])
         targets = list(map(lambda t: torch.Tensor(np.load(t)), targets))
         embs = list(map(lambda e: torch.Tensor(np.load(e)), embs))
-        return mix, torch.stack(targets, dim=3), embs.stack(embs, dim=3)
+        return mix, torch.stack(targets, dim=3), torch.stack(embs, dim=3)
 

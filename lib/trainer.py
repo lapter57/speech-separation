@@ -5,8 +5,8 @@ import math
 import torch
 import torch.nn as nn
 import traceback
-from mir_eval.separation import bss_eval_sources
 
+from mir_eval.separation import bss_eval_sources
 from config import Config
 from writter import CustomWriter
 from generators import create_dataloader
@@ -53,8 +53,8 @@ class Trainer():
             self.step = checkpoint['step']
             self.logger.info("Starting new training run")
 
-    def predict(self, mix. embs):
-        return self.model(mix) if embs is None else self.model(mix, embs)
+    def predict(self, mix, embs):
+        return self.model(mix) if embs is None else self.model(mix, embs.cuda())
 
     def get_estimated_specs(self, mix, masks_batch):
         sep_list = list()
@@ -110,7 +110,7 @@ class Trainer():
         try:
             while True:
                 self.model.train()
-                for mix, targets, embs in trainloader:
+                for mix, targets, embs in self.trainloader:
                     mix = mix.cuda()
                     targets = targets.cuda()
 
@@ -121,13 +121,13 @@ class Trainer():
                     est_list = list()
                     for i in range(self.config.train.batch_size):
                         masks_batch = masks[i]
-                        est_list.append(self_get_estimated_specs(mix[i], masks_batch))
+                        est_list.append(self.get_estimated_specs(mix[i], masks_batch))
                     est = torch.stack(est_list, dim=0)
                         
                     loss = self.criterion(est.cuda(), targets)
 
                     self.optimizer.zero_grad()
-                    self.loss.backward()
+                    loss.backward()
                     self.optimizer.step()
                     self.step += 1
 
@@ -152,6 +152,4 @@ class Trainer():
         except Exception as e:
             self.logger.info("Exiting due to exception: %s" % e)
             traceback.print_exc()
-                    
-
 

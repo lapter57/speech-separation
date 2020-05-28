@@ -22,3 +22,4 @@ def plot_spectrogram_to_numpy(spectrogram):
     data = fig2np(fig)
     plt.close()
     return data
+

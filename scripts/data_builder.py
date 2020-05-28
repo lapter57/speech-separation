@@ -170,7 +170,6 @@ class DataBuilder():
         frames_path = os.path.join(self.config.data.video.frames_path, target_dir)
         emb_path = os.path.join(self.config.data.video.emb_path, target_dir)
         utils.make_dirs(emb_path)
-        utils.make_dirs(frames_path)
     
         ids = list(set([int(name.split(":")[0]) for name in os.listdir(frames_path)]))
         ids = np.array_split(ids, self.config.face.num_workers)
