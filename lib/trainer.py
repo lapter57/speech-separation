@@ -101,7 +101,7 @@ class Trainer():
                 self.writer.log_evaluation(test_loss, sdr,
                                            mixed_wav, targets_wavs, est_wavs,
                                            mixed[:,:,0], targets[:,:,0,:], est[:,:,0,:], est_masks[:,:,0,:],
-                                           step)
+                                           self.step)
                 break
 
         self.model.train()
