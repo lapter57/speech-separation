@@ -8,7 +8,7 @@ import traceback
 
 from mir_eval.separation import bss_eval_sources
 from config import Config
-from writter import CustomWriter
+from writer import CustomWriter
 from generators import create_dataloader
 from audio import Audio
 from models import AoModel, AvModel
