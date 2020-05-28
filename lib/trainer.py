@@ -97,8 +97,10 @@ class Trainer():
                     est_wavs.append(self.audio.spec2wav(est[:,:,:,i]))
                 est_masks = masks_batch.cpu().detach().numpy()
 
-                sdr = bss_eval_sources(targets_wavs[0], est_wavs[0], False)[0][0]
-                self.writer.log_evaluation(test_loss, sdr,
+                sdrs = list()
+                for i in range(self.config.data.num_speakers):
+                    sdrs.append(bss_eval_sources(targets_wavs[i], est_wavs[i], False)[0][0])
+                self.writer.log_evaluation(test_loss, sdrs,
                                            mixed_wav, targets_wavs, est_wavs,
                                            mixed[:,:,0], targets[:,:,0,:], est[:,:,0,:], est_masks[:,:,0,:],
                                            self.step)

@@ -12,17 +12,17 @@ class CustomWriter(SummaryWriter):
     def log_training(self, train_loss, step):
         self.add_scalar('train_loss', train_loss, step)
 
-    def log_evaluation(self, test_loss, sdr,
+    def log_evaluation(self, test_loss, sdrs,
                        mixed_wav, targets_wavs, est_wavs,
                        mixed_spec, target_specs, est_specs, est_masks,
                        step):
         self.add_scalar('test_loss', test_loss, step)
-        self.add_scalar('SDR', sdr, step)
 
         self.add_audio('mixed_wav', mixed_wav, step, self.config.audio.sample_rate)
         self.add_image('data/mixed_spectrogram',
             plot_spectrogram_to_numpy(mixed_spec), step, dataformats='HWC')
         for i in range(len(targets_wavs)):
+            self.add_scalar(('SDR_{}').format(i), sdrs[i], step)
             self.add_audio(('target_wav_{}').format(i), targets_wavs[i], step, self.config.audio.sample_rate)
             self.add_audio(('estimated_wav_{}').format(i), est_wavs[i], step, self.config.audio.sample_rate)
             self.add_image(('data/target_spectrogram{}').format(i),
