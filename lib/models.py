@@ -1,97 +1,184 @@
-import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, Conv2D, Flatten, Lambda, ReLU, Reshape, LSTM
-from tensorflow.keras.layers import TimeDistributed, Bidirectional, BatchNormalization, concatenate
-from tensorflow.keras.models import Model, Sequential
-from tensorflow.keras import optimizers
-from tensorflow.keras.initializers import he_normal, glorot_uniform
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
-def conv2d(filters, kernel_size, dilation_rate, name, model):
-    model.add(Conv2D(filters, kernel_size=kernel_size, strides=(1, 1), 
-                  padding='same', dilation_rate=dilation_rate, name=name))
-    model.add(BatchNormalization())
-    model.add(ReLU())
-    return model
+class AudioStream(nn.Module):
+    def __init__(self, config):
+        super(AudioStream, self).__init__()
+        self.config = config
 
-def build_audio_conv_layers():
-    model = Sequential()
-    model = conv2d(96, (1, 7), (1, 1), 'a_conv1', model)
-    model = conv2d(96, (7, 1), (1, 1), 'a_conv2', model)
-    model = conv2d(96, (5, 5), (1, 1), 'a_conv3', model)
-    model = conv2d(96, (5, 5), (2, 1), 'a_conv4', model)
-    model = conv2d(96, (5, 5), (4, 1), 'a_conv5', model)
-    model = conv2d(96, (5, 5), (8, 1), 'a_conv6', model)
-    model = conv2d(96, (5, 5), (16, 1), 'a_conv7', model)
-    model = conv2d(96, (5, 5), (32, 1), 'a_conv8', model)
-    model = conv2d(96, (5, 5), (1, 1), 'a_conv9', model)
-    model = conv2d(96, (5, 5), (2, 2), 'a_conv10', model)
-    model = conv2d(96, (5, 5), (4, 4), 'a_conv11', model)
-    model = conv2d(96, (5, 5), (8, 8), 'a_conv12', model)
-    model = conv2d(96, (5, 5), (16, 16), 'a_conv13', model)
-    model = conv2d(96, (5, 5), (32, 32), 'a_conv14', model)
-    model = conv2d(8, (1, 1), (1, 1), 'a_conv15', model)
-    return model
-
-def build_video_conv_layers():
-    model = Sequential()
-    model = conv2d(256, (7, 1), (1, 1), 'v_conv1', model)
-    model = conv2d(256, (5, 1), (1, 1), 'v_conv2', model)
-    model = conv2d(256, (5, 1), (2, 1), 'v_conv3', model)
-    model = conv2d(256, (5, 1), (4, 1), 'v_conv4', model)
-    model = conv2d(256, (5, 1), (8, 1), 'v_conv5', model)
-    model = conv2d(256, (5, 1), (16, 1), 'v_conv6', model)
-    return model
-
-def UpSampling2DBilinear(size):
-    return Lambda(lambda x: tf.compat.v1.image.resize(x, size, align_corners=True))
-
-def sliced(x, index):
-    return x[:, :, :, index]
-
-def build_ao_model(n_speakers):
-    model = build_audio_conv_layers()
-    model.add(TimeDistributed(Flatten()))
-    model.add(Bidirectional(LSTM(400, input_shape=(298, 8 * 257), return_sequences=True), merge_mode='sum'))
-    model.add(Dense(600, name="fc1", activation='relu',
-                kernel_initializer=he_normal(seed=27)))
-    model.add(Dense(600, name="fc2", activation='relu',
-                kernel_initializer=he_normal(seed=42)))
-    model.add(Dense(600, name="fc3", activation='relu',
-                kernel_initializer=he_normal(seed=65)))
-    model.add(Dense(257 * 2 * n_speakers, name="complex_mask",
-                         kernel_initializer=glorot_uniform(seed=87)))
-    model.add(Reshape((298, 257, 2, n_speakers)))
-
-    model_input = Input(shape=(298, 257, 2))
-    AO_model = Model(inputs=model_input, outputs=model(model_input))
-    AO_model.compile(optimizer=optimizers.Adam(), loss='mse')
-    return AO_model
-
-def build_av_model(n_speakers):
-    a_model = build_audio_conv_layers()
-    a_model.add(Reshape((298, 8 * 257)))
-    a_input = Input(shape=(298, 257, 2))
-    a_out = a_model(a_input)
-
-    v_model = build_video_conv_layers()
-    v_model.add(Reshape((75, 256, 1)))
-    v_model.add(UpSampling2DBilinear((298, 256)))
-    v_model.add(Reshape((298, 256)))
-
-    v_input = Input(shape=(75, 1, 1792, n_speakers))
-    AVfusion_list = [a_out]
-    for i in range(n_speakers):
-        single_input = Lambda(sliced, arguments={'index': i})(v_input)
-        v_out = v_model(single_input)
-        AVfusion_list.append(v_out)
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels=2, out_channels=96, kernel_size=(1, 7), padding=(0, 3), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(7, 1), padding=(3, 0), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(2, 2), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(4, 2), dilation=(2, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(8, 2), dilation=(4, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(16, 2), dilation=(8, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(32, 2), dilation=(16, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(64, 2), dilation=(32, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(2, 2), dilation=(1, 1)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(4, 4), dilation=(2, 2)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(8, 8), dilation=(4, 4)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(16, 16), dilation=(8, 8)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(32, 32), dilation=(16, 16)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=96, kernel_size=(5, 5), padding=(64, 64), dilation=(32, 32)),
+            nn.BatchNorm2d(96), nn.ReLU(),
+            nn.Conv2d(in_channels=96, out_channels=8, kernel_size=(1, 1), padding=(0, 0), dilation=(1, 1)),
+            nn.BatchNorm2d(8), nn.ReLU()
+        )
     
-    AVfusion = concatenate(AVfusion_list, axis=2)
-    AVfusion = TimeDistributed(Flatten())(AVfusion)
-    lstm = Bidirectional(LSTM(400, input_shape=(298, 8 * 257), return_sequences=True), merge_mode='sum')(AVfusion)
-    fc1 = Dense(600, name="fc1", activation='relu', kernel_initializer=he_normal(seed=27))(lstm)
-    fc2 = Dense(600, name="fc2", activation='relu', kernel_initializer=he_normal(seed=42))(fc1)
-    fc3 = Dense(600, name="fc3", activation='relu', kernel_initializer=he_normal(seed=65))(fc2)
-    complex_mask = Dense(257 * 2 * n_speakers, name="complex_mask", kernel_initializer=glorot_uniform(seed=87))(fc3)
-    complex_mask_out = Reshape((298, 257, 2, n_speakers))(complex_mask)
-    AV_model = Model(inputs=[a_input, v_input], outputs=complex_mask_out)
-    AV_model.compile(optimizer='adam', loss='mse')
-    return AV_model
+    def forward(self, x):
+        # x: [B, F, T, 2]
+        x = x.permute(0, 3, 2, 1)
+        # x: [B, 2, T, F]
+        return self.conv(x)
+        # x: [B, 8, T, F]
+
+class VisualStream(nn.Module):
+    def __init__(self, config):
+        super(VisualStream, self).__init__()
+        self.config = config
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels=512, out_channels=256, kernel_size=(7, 1), padding=(3, 0), dilation=(1, 1)),
+            nn.BatchNorm2d(256), nn.ReLU(),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(5, 1), padding=(2, 0), dilation=(1, 1)),
+            nn.BatchNorm2d(256), nn.ReLU(),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(5, 1), padding=(4, 0), dilation=(2, 1)),
+            nn.BatchNorm2d(256), nn.ReLU(),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(5, 1), padding=(8, 0), dilation=(4, 1)),
+            nn.BatchNorm2d(256), nn.ReLU(),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(5, 1), padding=(16, 0), dilation=(8, 1)),
+            nn.BatchNorm2d(256), nn.ReLU(),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(5, 1), padding=(32, 0), dilation=(16, 1)),
+            nn.BatchNorm2d(256), nn.ReLU()
+        )
+
+    def forward(self, x):
+        # x: [B, num_frames, 1, emb_size, num_speakers]
+        x = x.permute(0, 3, 1, 2, 4)
+        # x: [B, emb_size, num_frames, 1, num_speakers]
+        visual_list = list()
+        for i in range(self.config.data.num_speakers):
+            v = x[:,:,:,:,i]
+            # v: [B, emb_size, num_frames, 1]
+            v = self.conv(v)
+            # v: [B, 256, num_frames, 1]
+            v = v.permute(0, 3, 1, 2)
+            # v: [B, 1, 256, num_frames]
+            v = nn.functional.interpolate(v, size=(256, self.config.audio.num_freq), mode="bilinear")
+            # v: [B, 1, 256, F]
+            v = v.permute(0, 2, 3, 1)
+            # v: [B, 256, F, 1]
+            visual_list.append(v)
+        x = torch.cat(visual_list, dim=1)
+        # x: [B, 256 * num_speakers, F, 1]
+        return x.view((-1, x.shape[1], x.shape[2]))
+        # x: [B, 256 * num_speakers, F]
+
+class FusionStream(nn.Module):
+    def __init__(self, config, is_av=True):
+        super(FusionStream, self).__init__()
+        self.config = config
+
+        lstm_input_size = 8 * config.audio.num_time
+        lstm_input_size = lstm_input_size + 256 * config.data.num_speakers if is_av else lstm_input_size
+
+        self.blstm = nn.LSTM(
+            lstm_input_size,
+            config.model.lstm_dim,
+            batch_first=True,
+            bidirectional=True)
+
+        self.fc1 = nn.Linear(2 * config.model.lstm_dim, config.model.fc1_dim)
+        self.fc2 = nn.Linear(config.model.fc1_dim, config.model.fc2_dim)
+        self.fc3 = nn.Linear(config.model.fc2_dim, config.audio.num_time * 2 * config.data.num_speakers)
+
+    def forward(self, x):
+        x, _ = self.blstm(x)
+        # x: [B, F, 2 * lstm_dim]
+        x = F.relu(x)
+        x = self.fc1(x) 
+        # x: [B, F, fc2_dim]
+        x = F.relu(x)
+        x = self.fc2(x)
+        # x: [B, F, fc3_dim]
+        x = F.relu(x)
+        x = self.fc3(x)
+        # x: [B, F, 2 * T * num_speakers]
+        x = torch.sigmoid(x)
+
+        spec_size = 2 * self.config.audio.num_time
+        masks = []
+        for i in range(self.config.data.num_speakers):
+            start = i * spec_size
+            mask = x[:, :, start:start+spec_size]
+            masks.append(mask)
+        x = torch.stack(masks, dim=0)
+        # x: [2, B, F, 2 * T]
+        x = x.permute(1, 0, 2, 3) 
+        # x: [B, 2, F, 2 * T]
+        x = x.view(-1, self.config.data.num_speakers, self.config.audio.num_time, 2, self.config.audio.num_freq)
+        # x: [B, 2, T, 2, F]
+        x = x.permute(0, 1, 3, 2, 4)
+        # x: [B, 2, 2, T, F]
+        return  x.permute(0, 4, 3, 2, 1)
+        # x: [B, F, T, 2, 2]
+     
+
+class AoModel(nn.Module):
+    def __init__(self, config):
+        super(AoModel, self).__init__()
+        self.config = config
+        
+        self.audio_stream = AudioStream(config)
+        self.fusion_stream = FusionStream(config, False)
+        
+    def forward(self, x):
+        # x: [B, F, T, 2]
+        x = self.audio_stream(x)
+        # x: [B, 8, T, F]
+        x = x.contiguous().view((-1, x.shape[3], x.shape[1] * x.shape[2]))
+        # x: [B, F, 8 * T]
+        return self.fusion_stream(x)
+        # x: [B, F, T, 2, 2]
+        
+
+class AvModel(nn.Module):
+    def __init__(self, config):
+        super(AvModel, self).__init__()
+        self.config = config
+
+        self.audio_stream = AudioStream(config)
+        self.visual_stream = VisualStream(config)
+        self.fusion_stream = FusionStream(config)
+
+    def forward(self, a, v):
+        # a: [B, F, T, 2]
+        # v: [B, num_frames, 1, emb_size, num_speakers]
+        a = self.audio_stream(a)
+        # a: [B, 8, T, F]
+        a = a.contiguous().view((-1, a.shape[1] * a.shape[2], a.shape[3]))
+        # a: [B, 8 * T, F]
+        v = self.visual_stream(v)
+        # v: [B, 256 * num_speakers, F]
+        fusion = torch.cat([v, a], dim=1)
+        # fusion: [B, 256 * num_speakers + 8 * T, F]
+        fusion = fusion.permute(0, 2, 1)
+        # fusion: [B, F, 256 * num_speakers + 8 * T]
+        return self.fusion_stream(fusion)
+        # fusion: [B, F, T, 2, 2]
+

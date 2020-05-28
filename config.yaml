@@ -1,0 +1,58 @@
+audio:
+  n_fft: 1200
+  num_freq: 601 # n_fft//2 + 1
+  num_time: 301
+  sample_rate: 16000
+  hop_length: 160
+  win_length: 400
+  min_level_db: -100.0
+  ref_level_db: 20.0
+  power: 0.3
+  len: 3.0
+  crm:
+    compressing: 'sigmoid' # 'sigmoid' or 'tanh'
+    tanh_k: 10
+    tanh_c: 0.1
+
+model:
+  lstm_dim: 400
+  fc1_dim: 600
+  fc2_dim: 600
+
+data:
+  num_workers: 8
+  build_mode: 'seq' # 'cp' or 'seq'
+  num_speakers: 2
+  audio:
+    audio_ext: 'wav'
+    noise_prefix: 'n:'
+    path: '/usr/dev/speech-separation/data/audio'
+    speech_dir: 'speech'
+    noise_dir: 'noise'
+  video:
+    video_ext: 'mp4'
+    fps: 25
+    frames_path: '/usr/dev/speech-separation/data/frames'
+    emb_path: '/usr/dev/speech-separation/data/emb'
+
+face:
+  ctx_id: 0
+  nms: 0.4
+  num_faces: 75
+  num_workers: 3
+
+train:
+  model: 'av' # 'av' or 'ao'
+  num_epoch: 100
+  batch_size: 4
+  adam_lr: 0.0001
+  num_workers: 16
+  summary_interval: 1
+  checkpoint_interval: 2000
+
+log:
+  model_name: 'ao_model_v2'
+  chkpt_dir: 'chkpt'
+  log_dir: 'logs'
+
+
