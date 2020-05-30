@@ -46,7 +46,7 @@ class Trainer():
         self.step = 0
 
         if chkpt_file is not None:
-            logger.info("Resuming from checkpoint: %s" % chkpt_file)
+            self.logger.info("Resuming from checkpoint: %s" % chkpt_file)
             checkpoint = torch.load(chkpt_file)
             self.model.load_state_dict(checkpoint['model'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])

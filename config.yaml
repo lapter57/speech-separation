@@ -36,6 +36,7 @@ data:
     emb_path: '/usr/dev/speech-separation/data/emb'
 
 face:
+  emb_size: 512
   ctx_id: 0
   nms: 0.4
   num_faces: 75

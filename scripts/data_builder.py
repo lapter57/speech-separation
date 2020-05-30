@@ -147,7 +147,7 @@ class DataBuilder():
             crop_img = cv2.resize(crop_img, (112, 112))
             emb = np.array(faces[0].normed_embedding.tolist()) 
             return emb
-        return np.zeros((1, 512))
+        return np.zeros((1, self.config.face.emb_size))
     
     def process_frames(self, ids, frames_path, emb_path, remove_frames=True):
         for id in tqdm(ids, desc="Processing frames"):
@@ -155,8 +155,8 @@ class DataBuilder():
             if (len(found_files) != 0):
                 file = found_files[0]
                 prefix_name = ":".join(file.split(":", 2)[:2])
-                embs = np.zeros((75, 1, 512))
-                for j in range(1, 76):
+                embs = np.zeros((self.config.face.num_faces, 1, self.config.face.emb_size))
+                for j in range(1, self.config.face.num_faces + 1):
                     filename = prefix_name + ":{:0>2d}.jpg".format(j)
                     embs[j - 1, : ] = face_detect(os.path.join(frames_path, filename))
                 np.save(os.path.join(emb_path, "{}.npy".format(prefix_name)), embs)
