@@ -60,10 +60,7 @@ class Trainer():
         sep_list = list()
         for i in range(self.config.data.num_speakers):
             mask = masks_batch[:,:,:,i]
-            s = torch.empty((self.config.audio.num_freq, self.config.audio.num_time, 2))
-            s[:,:,0] = mask[:,:,0] * mix[:,:,0] - mask[:,:,1] * mix[:,:,1]
-            s[:,:,1] = mask[:,:,0] * mix[:,:,1] + mask[:,:,1] * mix[:,:,0]
-            sep_list.append(s)
+            sep_list.append(mask * mix)
         return torch.stack(sep_list, dim=3)
 
     def validate(self):
