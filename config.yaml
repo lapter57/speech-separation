@@ -43,7 +43,7 @@ face:
   num_workers: 3
 
 train:
-  model: 'av' # 'av' or 'ao'
+  model: 'ao' # 'av' or 'ao'
   num_epoch: 100
   batch_size: 4
   adam_lr: 0.0001
@@ -52,7 +52,7 @@ train:
   checkpoint_interval: 2000
 
 log:
-  model_name: 'ao_model_v2'
+  model_name: 'ao_model'
   chkpt_dir: 'chkpt'
   log_dir: 'logs'
 

@@ -72,9 +72,6 @@ class Trainer():
                 targets = targets.cuda()
     
                 masks = self.predict(mix, embs) 
-               # masks[masks == 0] += 0.000001
-               # masks[masks == 1] -= 0.000001
-               # masks = torch.log(masks / (1 - masks)) 
                 masks_batch = masks[0]
 
                 est = self.get_estimated_specs(mix[0], masks_batch)  
@@ -114,9 +111,6 @@ class Trainer():
                     targets = targets.cuda()
 
                     masks = self.predict(mix, embs) 
-                   # masks[masks == 0] += 0.000001
-                   # masks[masks == 1] -= 0.000001
-                   # masks = torch.log(masks / (1 - masks)) 
                     est_list = list()
                     for i in range(self.config.train.batch_size):
                         masks_batch = masks[i]

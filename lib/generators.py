@@ -13,21 +13,21 @@ def create_dataloader(config, train):
         target_list = list()
         mix_list = list()
 
-        for mix, targets in batch:
+        for mix, targets, _ in batch:
             mix_list.append(mix)
             target_list.append(targets)
 
         target_list = torch.stack(target_list, dim=0)
         mix_list = torch.stack(mix_list, dim=0)
 
-        return mix_list, target_list
+        return mix_list, target_list, None
 
     def av_collate_fn(batch):
         emb_list = list()
         target_list = list()
         mix_list = list()
 
-        for mix, embs, targets in batch:
+        for mix, targets, embs in batch:
             mix_list.append(mix)
             target_list.append(targets)
             emb_list.append(embs)
@@ -36,7 +36,7 @@ def create_dataloader(config, train):
         target_list = torch.stack(target_list, dim=0)
         mix_list = torch.stack(mix_list, dim=0)
 
-        return mix_list, emb_list, target_list
+        return mix_list, target_list, emb_list
 
     dataset = AudioDataset(config, True) if config.train.model == 'ao' else AudioVisualDataset(config, True)
     collate_fn = ao_collate_fn if config.train.model == 'ao' else av_collate_fn

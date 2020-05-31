@@ -23,8 +23,12 @@ class DataBuilder():
         self.executor = ThreadPoolExecutor(cpu_count)
         self.fs = []
         self.audio_handler = Audio(config)
-        self.face_model = insightface.app.FaceAnalysis()
-        self.face_model.prepare(ctx_id=config.face.ctx_id, nms=config.face.nms)
+        self.face_model = self.prepare_face_model()
+
+    def prepare_face_model(self):
+        face_model = insightface.app.FaceAnalysis()
+        face_model.prepare(ctx_id=self.config.face.ctx_id, nms=self.config.face.nms)
+        return face_model
 
     def init_audio_dirs(self, path):
         utils.make_dirs(path)
@@ -137,9 +141,10 @@ class DataBuilder():
             wait(self.fs)
             self.fs.clear()
 
-    def face_detect(self, image_path):
+    def face_detect(self, image_path, model=None):
+        model = self.face_model if model is None else model
         img = cv2.imread(image_path)
-        faces = face_model.get(img)
+        faces = model.get(img)
         if len(faces) != 0:
             box = faces[0].bbox.astype(np.int).flatten()
             box[box < 0] = 0
@@ -149,7 +154,8 @@ class DataBuilder():
             return emb
         return np.zeros((1, self.config.face.emb_size))
     
-    def process_frames(self, ids, frames_path, emb_path, remove_frames=True):
+    def process_frames(self, ids, frames_path, emb_path, remove_frames=True, use_new_model=False):
+        model = self.prepare_face_model() if use_new_model else self.face_model 
         for id in tqdm(ids, desc="Processing frames"):
             found_files = [name for name in os.listdir(frames_path) if name.startswith(str(id) + ":")]
             if (len(found_files) != 0):
@@ -158,7 +164,7 @@ class DataBuilder():
                 embs = np.zeros((self.config.face.num_faces, 1, self.config.face.emb_size))
                 for j in range(1, self.config.face.num_faces + 1):
                     filename = prefix_name + ":{:0>2d}.jpg".format(j)
-                    embs[j - 1, : ] = face_detect(os.path.join(frames_path, filename))
+                    embs[j - 1, : ] = face_detect(os.path.join(frames_path, filename), model)
                 np.save(os.path.join(emb_path, "{}.npy".format(prefix_name)), embs)
             if remove_frames:
                 for f in found_files:
@@ -174,7 +180,9 @@ class DataBuilder():
         ids = list(set([int(name.split(":")[0]) for name in os.listdir(frames_path)]))
         ids = np.array_split(ids, self.config.face.num_workers)
         for i in ids:
-            self.fs.append(self.executor.submit(self.process_frames, i, frames_path, emb_path, remove_frames))
+            self.fs.append(self.executor.submit(self.process_frames, 
+                                                i, frames_path, emb_path, 
+                                                remove_frames, False if i == 0 else True))
         if wait_tasks:
             wait(self.fs)
             self.fs.clear()
